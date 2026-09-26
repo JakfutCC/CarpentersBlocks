@@ -11,6 +11,7 @@ import com.carpentersblocks.CarpentersBlocks;
 import com.carpentersblocks.data.Hinge;
 import com.carpentersblocks.tileentity.TEBase;
 import com.carpentersblocks.util.BlockProperties;
+import com.carpentersblocks.util.WorldHeight;
 import com.carpentersblocks.util.registry.BlockRegistry;
 
 import cpw.mods.fml.relauncher.Side;
@@ -40,7 +41,7 @@ public class ItemCarpentersDoor extends ItemBlock {
 
             ++y;
 
-            if (y < 255 && entityPlayer.canPlayerEdit(x, y, z, side, itemStack)
+            if (WorldHeight.canPlaceTwoHighDoor(world, y) && entityPlayer.canPlayerEdit(x, y, z, side, itemStack)
                     && entityPlayer.canPlayerEdit(x, y + 1, z, side, itemStack)
                     && world.isAirBlock(x, y, z)
                     && world.isAirBlock(x, y + 1, z)

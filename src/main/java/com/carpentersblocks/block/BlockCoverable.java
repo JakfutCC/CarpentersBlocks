@@ -39,6 +39,7 @@ import com.carpentersblocks.renderer.helper.RoutableFluidsHelper;
 import com.carpentersblocks.tileentity.TEBase;
 import com.carpentersblocks.util.BlockProperties;
 import com.carpentersblocks.util.EntityLivingUtil;
+import com.carpentersblocks.util.WorldHeight;
 import com.carpentersblocks.util.handler.DesignHandler;
 import com.carpentersblocks.util.handler.EventHandler;
 import com.carpentersblocks.util.handler.OverlayHandler;
@@ -1225,36 +1226,30 @@ public class BlockCoverable extends BlockContainer {
      */
     public boolean shouldSideBeRendered(IBlockAccess blockAccess, int x, int y, int z, int side) {
         // Side checks in out-of-range areas will crash
-        if (y > 0 && y < blockAccess.getHeight()) {
-            TEBase TE = getTileEntity(blockAccess, x, y, z);
-            if (TE != null) {
-                ForgeDirection side_src = ForgeDirection.getOrientation(side);
-                ForgeDirection side_adj = side_src.getOpposite();
+        ForgeDirection side_src = ForgeDirection.getOrientation(side);
+        ForgeDirection side_adj = side_src.getOpposite();
+        int sourceX = x + side_adj.offsetX;
+        int sourceY = y + side_adj.offsetY;
+        int sourceZ = z + side_adj.offsetZ;
 
-                TEBase TE_adj = (TEBase) blockAccess.getTileEntity(x, y, z);
-                TEBase TE_src = (TEBase) blockAccess
-                        .getTileEntity(x + side_adj.offsetX, y + side_adj.offsetY, z + side_adj.offsetZ);
-
-                if (TE_adj != null && TE_src != null
-                        && TE_adj.getBlockType().isSideSolid(blockAccess, x, y, z, side_adj)
-                                == TE_src.getBlockType().isSideSolid(
-                                        blockAccess,
-                                        x + side_adj.offsetX,
-                                        y + side_adj.offsetY,
-                                        z + side_adj.offsetZ,
-                                        ForgeDirection.getOrientation(side))) {
+        if (WorldHeight.shouldQueryCoverSide(blockAccess, y, sourceY)) {
+            TEBase TE_src = getTileEntity(blockAccess, sourceX, sourceY, sourceZ);
+            if (TE_src != null && WorldHeight.isCoverSideInRange(TE_src.getWorldObj(), blockAccess, y, sourceY)) {
+                TEBase TE_adj = getTileEntity(blockAccess, x, y, z);
+                if (TE_adj != null && TE_adj.getBlockType().isSideSolid(blockAccess, x, y, z, side_adj)
+                        == TE_src.getBlockType().isSideSolid(blockAccess, sourceX, sourceY, sourceZ, side_src)) {
 
                     if (shareFaces(TE_adj, TE_src, side_adj, side_src)) {
 
                         Block block_adj = BlockProperties.toBlock(BlockProperties.getCover(TE_adj, 6));
                         Block block_src = BlockProperties.toBlock(BlockProperties.getCover(TE_src, 6));
 
-                        if (!TE_adj.hasAttribute(TE.ATTR_COVER[6])) {
-                            return TE_src.hasAttribute(TE.ATTR_COVER[6]);
+                        if (!TE_adj.hasAttribute(TEBase.ATTR_COVER[6])) {
+                            return TE_src.hasAttribute(TEBase.ATTR_COVER[6]);
                         } else {
-                            if (!TE_src.hasAttribute(TE.ATTR_COVER[6]) && block_adj.getRenderBlockPass() == 0) {
+                            if (!TE_src.hasAttribute(TEBase.ATTR_COVER[6]) && block_adj.getRenderBlockPass() == 0) {
                                 return !block_adj.isOpaqueCube();
-                            } else if (TE_src.hasAttribute(TE.ATTR_COVER[6])
+                            } else if (TE_src.hasAttribute(TEBase.ATTR_COVER[6])
                                     && block_src.isOpaqueCube() == block_adj.isOpaqueCube()
                                     && block_src.getRenderBlockPass() == block_adj.getRenderBlockPass()) {
                                         return false;
